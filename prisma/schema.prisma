@@ -14,3 +14,43 @@ model Budget {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Category {
+  id             String          @id @default(cuid())
+  name           String
+  type           TransactionType
+  transactions   Transaction[]
+  monthlyBudgets MonthlyBudget[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Transaction {
+  id          String           @id @default(cuid())
+  amount      Float
+  type        TransactionType
+  date        DateTime         @default(now())
+  description String?
+  categoryId  String?
+  category    Category?        @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model MonthlyBudget {
+  id         String   @id @default(cuid())
+  amount     Float
+  month      Int
+  year       Int
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([categoryId, month, year])
+}

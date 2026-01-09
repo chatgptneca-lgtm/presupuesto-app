@@ -28,3 +28,15 @@ export const monthlyBudgetUpdateSchema = monthlyBudgetCreateSchema.extend({
 export const monthlyBudgetIdSchema = z.object({
   id: z.string().cuid()
 });
+
+export const monthlyBudgetUpsertSchema = z.object({
+  categoryId: z.string().cuid(),
+  amount: z.coerce.number().nonnegative(),
+  month: z.coerce.number().int().min(1).max(12),
+  year: z.coerce.number().int().min(2000)
+});
+
+export const monthlyBudgetListSchema = z.object({
+  month: z.coerce.number().int().min(1).max(12),
+  year: z.coerce.number().int().min(2000)
+});

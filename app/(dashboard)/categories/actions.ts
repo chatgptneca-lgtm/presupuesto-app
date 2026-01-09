@@ -1,13 +1,12 @@
 "use server";
 
-import { prisma } from "@/lib/db";
+import { revalidatePath } from "next/cache";
+
+import { prisma } from "@/lib/prisma";
 import {
   categoryCreateSchema,
   categoryIdSchema,
-  categoryUpdateSchema,
-  monthlyBudgetCreateSchema,
-  monthlyBudgetIdSchema,
-  monthlyBudgetUpdateSchema
+  categoryUpdateSchema
 } from "@/lib/validators/category";
 
 export async function listCategories() {
@@ -27,51 +26,57 @@ export async function getCategory(id: string) {
 }
 
 export async function createCategory(input: unknown) {
-  const data = categoryCreateSchema.parse(input);
+  const data =
+    input instanceof FormData
+      ? {
+          name: input.get("name"),
+          type: input.get("type")
+        }
+      : input;
+  const parsed = categoryCreateSchema.parse(data);
 
-  return prisma.category.create({
-    data
+  const category = await prisma.category.create({
+    data: parsed
   });
+
+  revalidatePath("/categories");
+  return category;
 }
 
 export async function updateCategory(input: unknown) {
-  const { id, ...data } = categoryUpdateSchema.parse(input);
+  const data =
+    input instanceof FormData
+      ? {
+          id: input.get("id"),
+          name: input.get("name"),
+          type: input.get("type")
+        }
+      : input;
+  const { id, ...parsed } = categoryUpdateSchema.parse(data);
 
-  return prisma.category.update({
+  const category = await prisma.category.update({
     where: { id },
-    data
+    data: parsed
   });
+
+  revalidatePath("/categories");
+  return category;
 }
 
-export async function deleteCategory(id: string) {
-  const { id: categoryId } = categoryIdSchema.parse({ id });
+export async function deleteCategory(input: unknown) {
+  const data =
+    input instanceof FormData
+      ? {
+          id: input.get("id")
+        }
+      : { id: input };
+  const { id: categoryId } = categoryIdSchema.parse(data);
 
-  return prisma.category.delete({
-    where: { id: categoryId }
-  });
-}
+  await prisma.$transaction([
+    prisma.monthlyBudget.deleteMany({ where: { categoryId } }),
+    prisma.transaction.deleteMany({ where: { categoryId } }),
+    prisma.category.delete({ where: { id: categoryId } })
+  ]);
 
-export async function createMonthlyBudget(input: unknown) {
-  const data = monthlyBudgetCreateSchema.parse(input);
-
-  return prisma.monthlyBudget.create({
-    data
-  });
-}
-
-export async function updateMonthlyBudget(input: unknown) {
-  const { id, ...data } = monthlyBudgetUpdateSchema.parse(input);
-
-  return prisma.monthlyBudget.update({
-    where: { id },
-    data
-  });
-}
-
-export async function deleteMonthlyBudget(id: string) {
-  const { id: budgetId } = monthlyBudgetIdSchema.parse({ id });
-
-  return prisma.monthlyBudget.delete({
-    where: { id: budgetId }
-  });
+  revalidatePath("/categories");
 }

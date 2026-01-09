@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { Home, PieChart, Wallet } from "lucide-react";
+import { ArrowLeftRight, Folder, Home, Wallet } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Resumen", icon: Home },
-  { href: "/", label: "Presupuestos", icon: Wallet },
-  { href: "/", label: "Reportes", icon: PieChart }
+  { href: "/budgets", label: "Presupuestos", icon: Wallet },
+  { href: "/categories", label: "Categorías", icon: Folder },
+  { href: "/transactions", label: "Transacciones", icon: ArrowLeftRight }
 ];
 
 export function Sidebar({ className }: { className?: string }) {
